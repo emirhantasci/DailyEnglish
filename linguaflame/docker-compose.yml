@@ -1,0 +1,49 @@
+services:
+  # ── Frontend (Nginx + React) ──────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    restart: unless-stopped
+    networks:
+      - app-net
+
+  # ── Backend (.NET 8 + SQLite) ─────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    volumes:
+      - api-data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Database__Path=/app/data/linguaflame.db
+      - Jwt__Secret=${JWT_SECRET:?JWT_SECRET env var is required}
+      - Jwt__Issuer=linguaflame
+      - Jwt__Audience=linguaflame
+      - Jwt__ExpiresHours=720
+      - Cors__Origins__0=${CORS_ORIGIN:-http://localhost:3000}
+    expose:
+      - "5001"
+    restart: unless-stopped
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  api-data:
+    driver: local
+
+networks:
+  app-net:
+    driver: bridge

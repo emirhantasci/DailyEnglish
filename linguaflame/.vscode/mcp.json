@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "dictionary": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["mcp-servers/dictionary-server/server.mjs"],
+      "env": {}
+    }
+  }
+}

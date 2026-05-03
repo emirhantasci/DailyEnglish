@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "linguaflame", "linguaflame", "{90FC2F2A-BB33-A74D-1841-BC55B3958B06}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{C4415246-B6B3-BD6F-3B00-4955E900F5F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinguaFlame.Api", "linguaflame\api\LinguaFlame.Api.csproj", "{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C4415246-B6B3-BD6F-3B00-4955E900F5F6} = {90FC2F2A-BB33-A74D-1841-BC55B3958B06}
+		{00DFC6B5-9BCD-01F2-2D65-262C1FE02CA1} = {C4415246-B6B3-BD6F-3B00-4955E900F5F6}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7B07F986-68BC-4680-A756-C14E029DD11A}
+	EndGlobalSection
+EndGlobal
