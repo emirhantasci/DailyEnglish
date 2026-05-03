@@ -11,98 +11,107 @@ Internet → Nginx (port 80/443)
 - **Database**: SQLite (file at `/app/data/linguaflame.db`, persisted via Docker volume)
 - **Auth**: JWT Bearer tokens (30-day expiry, no email verification needed)
 - **Users**: Email + password, bcrypt hashed
-- **Images**: Hosted on **GitHub Container Registry (GHCR)** — public, no login needed
+- **Deploy**: `.tar` image export → SCP → VPS load. No registry needed.
 
 ---
 
 ## Quick Start (Local)
 
 ```bash
-# 1. Copy env file
 cp .env.example .env
-
-# 2. Edit .env — set JWT_SECRET to something long and random
-#    Generate one: openssl rand -base64 48
-
-# 3. Start everything
+# Edit .env — set JWT_SECRET
 docker compose up --build
 ```
 
-App will be at http://localhost:3000
+App at http://localhost:3000
 
 ---
 
 ## Production Deploy on VPS
 
 ### Prerequisites
-- Docker + Docker Compose v2 installed
-- Domain pointed at your VPS (optional but recommended)
+- Docker + Docker Compose v2 on VPS
 
-### Step 1: Copy files to VPS
-
-VPS'te sadece 2 dosyaya ihtiyacın var:
+### Step 1: Build & export images (on your Mac)
 
 ```bash
-# VPS'te bir klasör oluştur
-mkdir -p ~/linguaflame && cd ~/linguaflame
-
-# docker-compose.yml ve .env dosyalarını buraya koy
-# (GitHub'dan çekebilir veya manuel oluşturabilirsin)
+cd linguaflame
+./build-save.sh
 ```
 
-### Step 2: .env dosyasını düzenle
+This creates:
+- `linguaflame-web.tar`
+- `linguaflame-api.tar`
+
+### Step 2: Copy to VPS
 
 ```bash
+# Create folder on VPS
+ssh user@VPS_IP "mkdir -p ~/linguaflame"
+
+# Copy files
+scp linguaflame-web.tar linguaflame-api.tar docker-compose.yml .env user@VPS_IP:~/linguaflame/
+```
+
+### Step 3: Edit .env on VPS
+
+```bash
+ssh user@VPS_IP
+cd ~/linguaflame
 nano .env
 ```
 
 ```env
 JWT_SECRET=0073sqy5qcuYwVMOiFceXdOu33iKGZ3rXMmcot8eGRk9Q3Mn1ZrTXGHBMU5Z/yez
-CORS_ORIGIN=http://VPS_IP_ADRESIN:3000
+CORS_ORIGIN=http://VPS_IP:3000
 WEB_PORT=3000
 ```
 
-> **Önemli**: `CORS_ORIGIN` değerini VPS'in IP adresi veya domain'in ile değiştir. Örn: `http://123.456.789.0:3000` veya `https://senindomain.com`
+> Replace `VPS_IP` with your actual VPS IP or domain.
 
-### Step 3: Başlat
+### Step 4: Load & start
 
 ```bash
+./load-images.sh
+```
+
+Or manually:
+```bash
+docker load -i linguaflame-web.tar
+docker load -i linguaflame-api.tar
 docker compose up -d
 ```
 
-İmajlar GHCR'dan otomatik çekilecek, build gerekmez.
-
-### Step 4: Kontrol
-
-```bash
-docker compose logs -f
-```
-
-Uygulama `http://VPS_IP:3000` adresinde çalışıyor olacak.
+App at `http://VPS_IP:3000`
 
 ---
 
-## Güncelleme (Update)
+## Update (after code changes)
 
-Yeni kod push'ladığında GitHub Actions otomatik build edip GHCR'a yeni imaj push'lar. VPS'te güncellemek için:
+On your Mac:
+```bash
+./build-save.sh
+scp linguaflame-web.tar linguaflame-api.tar user@VPS_IP:~/linguaflame/
+```
 
+On VPS:
 ```bash
 cd ~/linguaflame
-docker compose pull
+docker compose down
+docker load -i linguaflame-web.tar
+docker load -i linguaflame-api.tar
 docker compose up -d
 ```
 
 ---
 
-## HTTPS with Nginx reverse proxy (recommended)
+## HTTPS with Caddy (recommended)
 
-If you have a domain, put Nginx/Caddy in front:
-
-**Caddy (simplest — auto HTTPS):**
 ```
 yourdomain.com {
     reverse_proxy localhost:3000
 }
+```
 ```
 
 **Nginx:**

@@ -1,7 +1,7 @@
 services:
   # ── Frontend (Nginx + React) ──────────────────────────────
   web:
-    image: ghcr.io/emirhantasci/linguaflame-web:latest
+    image: linguaflame-web:latest
     depends_on:
       api:
         condition: service_healthy
@@ -13,17 +13,17 @@ services:
 
   # ── Backend (.NET 8 + SQLite) ─────────────────────────────
   api:
-    image: ghcr.io/emirhantasci/linguaflame-api:latest
+    image: linguaflame-api:latest
     volumes:
       - api-data:/app/data
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - Database__Path=/app/data/linguaflame.db
-      - Jwt__Secret=${JWT_SECRET:?JWT_SECRET env var is required}
+      - Jwt__Secret=${JWT_SECRET}
       - Jwt__Issuer=linguaflame
       - Jwt__Audience=linguaflame
       - Jwt__ExpiresHours=720
-      - Cors__Origins__0=${CORS_ORIGIN:-http://localhost:3000}
+      - Cors__Origins__0=${CORS_ORIGIN}
     restart: unless-stopped
     networks:
       - app-net
