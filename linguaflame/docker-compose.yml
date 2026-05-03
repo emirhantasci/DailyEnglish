@@ -18,14 +18,13 @@ services:
       - Jwt__Secret=${JWT_SECRET} # Make sure to set this in your VPS environment
       - Jwt__Issuer=linguaflame
       - Jwt__Audience=linguaflame
+      - Admin__Email=${ADMIN_EMAIL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.linguaflame-api.rule=Host(`linguaflame.emirhantasci.cloud`) && PathPrefix(`/api`)"
       - "traefik.http.routers.linguaflame-api.entrypoints=websecure"
       - "traefik.http.routers.linguaflame-api.tls.certresolver=le" # Assuming 'le' is your Let's Encrypt resolver
       - "traefik.http.services.linguaflame-api.loadbalancer.server.port=8080"
-      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
-      - "traefik.http.routers.linguaflame-api.middlewares=api-stripprefix"
 
   web:
     build:

@@ -11,6 +11,7 @@ import { ExamPage } from '@/pages/ExamPage';
 import { ResultPage } from '@/pages/ResultPage';
 import { WordLibraryPage } from '@/pages/WordLibraryPage';
 import { GrammarLibraryPage } from '@/pages/GrammarLibraryPage';
+import { AdminPage } from '@/pages/AdminPage';
 import type { ExamResult, DailySession } from '@/types';
 import { getStoredAuth, clearAuth, type AuthUser } from '@/services/authApi';
 
@@ -132,6 +133,7 @@ export default function App() {
             path="/grammar-library"
             element={<GrammarLibraryPage />}
           />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

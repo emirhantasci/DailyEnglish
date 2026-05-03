@@ -8,7 +8,7 @@ import { getTurkeyDateStr } from '@/utils/dateUtils';
  * Beginner topics appear less often since the user presumably knows them better.
  */
 const LEVEL_WEIGHT: Record<string, number> = {
-  beginner: 1,
+  beginner: 0.7,
   intermediate: 3,
   advanced: 5,
 };
@@ -16,7 +16,7 @@ const LEVEL_WEIGHT: Record<string, number> = {
 function dateToSeed(dateStr: string): number {
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
-    const char = dateStr.charCodeAt(i);
+    const char = dateStr.codePointAt(i) ?? 0;
     hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
@@ -48,10 +48,13 @@ export function useDailyGrammar(
     // ─── Phase 1: Uncompleted topics — natural progression ───
     const uncompleted = sorted.filter((g) => !completedSet.has(g.id));
     if (uncompleted.length > 0) {
-      // Pick from the first few uncompleted to maintain order with slight variety
-      const poolSize = Math.min(3, uncompleted.length);
+      // If user has progressed past early topics, deprioritize beginner-level ones
+      const nonBeginner = uncompleted.filter((g) => g.level !== 'beginner');
+      const pool = completedSet.size >= 5 && nonBeginner.length > 0 ? nonBeginner : uncompleted;
+
+      const poolSize = Math.min(5, pool.length);
       const idx = Math.floor(rng() * poolSize);
-      return uncompleted[idx];
+      return pool[idx];
     }
 
     // ─── Phase 2: All completed — weighted selection by level + staleness ───

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: linguaflame-api
+    restart: unless-stopped
+    networks:
+      - linguaflame-local
+    volumes:
+      - sqlite_data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Database__Path=/app/data/linguaflame.db
+      - Jwt__Secret=dev-local-secret-key-at-least-32-chars!!
+      - Jwt__Issuer=linguaflame
+      - Jwt__Audience=linguaflame
+      - Admin__Email=tasciemirhan53@gmail.com
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5000:8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: linguaflame-web
+    restart: unless-stopped
+    networks:
+      - linguaflame-local
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+networks:
+  linguaflame-local:
+    driver: bridge
+
+volumes:
+  sqlite_data:
+    driver: local

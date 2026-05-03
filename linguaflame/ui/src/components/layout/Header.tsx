@@ -1,11 +1,12 @@
-import { Flame, Snowflake, LogOut, BookOpen, Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { Flame, Snowflake, LogOut, BookOpen, Cloud, CloudOff, Loader2, Shield } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { StreakData } from '@/types';
 import type { SyncStatus } from '@/hooks/useSync';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { getStoredAuth } from '@/services/authApi';
 
 const syncConfig: Record<SyncStatus, { icon: typeof Cloud; color: string; label: string }> = {
   idle: { icon: Cloud, color: 'text-slate-500', label: 'Not synced' },
@@ -26,8 +27,27 @@ export function Header({ streak, displayName, onLogout, syncStatus }: HeaderProp
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const isInSession = location.pathname === '/lesson' || location.pathname === '/exam';
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const auth = getStoredAuth();
+      if (!auth) return;
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || '/api';
+        const res = await fetch(`${API_BASE}/admin/check`, {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.isAdmin === true);
+        }
+      } catch { /* ignore */ }
+    };
+    checkAdmin();
+  }, []);
 
   const handleLogoClick = () => {
     if (isInSession) {
@@ -81,6 +101,16 @@ export function Header({ streak, displayName, onLogout, syncStatus }: HeaderProp
             <BookOpen className="h-4 w-4" />
             <span className="text-sm">{displayName}</span>
           </div>
+
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="p-2 text-slate-400 hover:text-amber-400 transition-colors rounded-lg hover:bg-surface-700"
+              title="Admin Panel"
+            >
+              <Shield className="h-4 w-4" />
+            </button>
+          )}
 
           <button
             onClick={onLogout}

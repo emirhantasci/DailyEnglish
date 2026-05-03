@@ -16,7 +16,7 @@ var dbPath = builder.Configuration["Database:Path"] ?? Path.Combine(AppContext.B
 Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite($"Data Source={dbPath}"));
+    opt.UseSqlite($"Data Source={dbPath};Cache=Shared"));
 
 // ─── JWT Auth ────────────────────────────────────────────────
 var jwtSecret = builder.Configuration["Jwt:Secret"]
@@ -60,6 +60,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    // Enable WAL mode and busy timeout for SQLite concurrency
+    db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+    db.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+    db.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
 }
 
 app.UseCors("AllowFrontend");
@@ -200,6 +205,48 @@ app.MapGet("/api/leaderboard", async (AppDbContext db) =>
         .ToListAsync();
 
     return Results.Ok(top);
+}).RequireAuthorization();
+
+// ─── Admin: Users ────────────────────────────────────────────
+app.MapGet("/api/admin/users", async (ClaimsPrincipal user, AppDbContext db, IConfiguration config) =>
+{
+    var email = user.FindFirstValue(ClaimTypes.Email);
+    var adminEmail = config["Admin:Email"];
+
+    if (string.IsNullOrEmpty(adminEmail) || !string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase))
+        return Results.Forbid();
+
+    var users = await db.Users
+        .Include(u => u.Progress)
+        .OrderByDescending(u => u.CreatedAt)
+        .Select(u => new
+        {
+            id = u.Id,
+            email = u.Email,
+            displayName = u.DisplayName,
+            createdAt = u.CreatedAt,
+            lastLoginAt = u.LastLoginAt,
+            currentStreak = u.Progress != null ? u.Progress.CurrentStreak : 0,
+            longestStreak = u.Progress != null ? u.Progress.LongestStreak : 0,
+            lastActiveDate = u.Progress != null ? u.Progress.LastActiveDate : null,
+            lastModified = u.Progress != null ? u.Progress.LastModified : (DateTime?)null,
+            totalExams = u.Progress != null ? u.Progress.TotalExams : 0,
+            totalScore = u.Progress != null ? u.Progress.TotalScore : 0,
+            totalMaxScore = u.Progress != null ? u.Progress.TotalMaxScore : 0,
+            joinedDate = u.Progress != null ? u.Progress.JoinedDate : null,
+        })
+        .ToListAsync();
+
+    return Results.Ok(users);
+}).RequireAuthorization();
+
+// ─── Admin: Check ────────────────────────────────────────────
+app.MapGet("/api/admin/check", (ClaimsPrincipal user, IConfiguration config) =>
+{
+    var email = user.FindFirstValue(ClaimTypes.Email);
+    var adminEmail = config["Admin:Email"];
+    var isAdmin = !string.IsNullOrEmpty(adminEmail) && string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase);
+    return Results.Ok(new { isAdmin });
 }).RequireAuthorization();
 
 app.Run();

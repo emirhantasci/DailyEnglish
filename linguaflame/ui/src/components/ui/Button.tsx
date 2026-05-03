@@ -5,6 +5,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children?: ReactNode;
   variant?: Variant;
   size?: Size;
   icon?: ReactNode;
