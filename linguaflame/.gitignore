@@ -38,4 +38,3 @@ mcp-servers/*/node_modules
 # .NET build artifacts
 api/bin/
 api/obj/
-api/data/
