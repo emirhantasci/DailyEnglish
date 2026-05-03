@@ -15,16 +15,19 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - Database__Path=/app/data/linguaflame.db
-      - Jwt__Secret=${JWT_SECRET} # Make sure to set this in your VPS environment
+      - Jwt__Secret=${JWT_SECRET}
       - Jwt__Issuer=linguaflame
       - Jwt__Audience=linguaflame
       - Admin__Email=${ADMIN_EMAIL}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.linguaflame-api.rule=Host(`linguaflame.emirhantasci.cloud`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.linguaflame-api.entrypoints=websecure"
-      - "traefik.http.routers.linguaflame-api.tls.certresolver=le" # Assuming 'le' is your Let's Encrypt resolver
-      - "traefik.http.services.linguaflame-api.loadbalancer.server.port=8080"
+      # Çakışmayı önlemek için router ismini benzersiz yaptık
+      - "traefik.http.routers.linguaflame-api-v1.rule=Host(`linguaflame.emirhantasci.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.linguaflame-api-v1.entrypoints=websecure"
+      - "traefik.http.routers.linguaflame-api-v1.tls.certresolver=mytlschallenge" # Loglara göre düzeltildi
+      - "traefik.http.routers.linguaflame-api-v1.priority=100"
+      # Loglarda görünen gerçek port olan 5001'e yönlendirdik
+      - "traefik.http.services.linguaflame-api-v1.loadbalancer.server.port=5001"
 
   web:
     build:
@@ -38,10 +41,11 @@ services:
       - api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.linguaflame-web.rule=Host(`linguaflame.emirhantasci.cloud`)"
-      - "traefik.http.routers.linguaflame-web.entrypoints=websecure"
-      - "traefik.http.routers.linguaflame-web.tls.certresolver=le" # Assuming 'le' is your Let's Encrypt resolver
-      - "traefik.http.services.linguaflame-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.linguaflame-web-v1.rule=Host(`linguaflame.emirhantasci.cloud`)"
+      - "traefik.http.routers.linguaflame-web-v1.entrypoints=websecure"
+      - "traefik.http.routers.linguaflame-web-v1.tls.certresolver=mytlschallenge" # Loglara göre düzeltildi
+      - "traefik.http.routers.linguaflame-web-v1.priority=10"
+      - "traefik.http.services.linguaflame-web-v1.loadbalancer.server.port=80"
 
 networks:
   traefik-public:
