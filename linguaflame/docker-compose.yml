@@ -1,9 +1,7 @@
 services:
   # ── Frontend (Nginx + React) ──────────────────────────────
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/emirhantasci/linguaflame-web:latest
     depends_on:
       api:
         condition: service_healthy
@@ -15,9 +13,7 @@ services:
 
   # ── Backend (.NET 8 + SQLite) ─────────────────────────────
   api:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
+    image: ghcr.io/emirhantasci/linguaflame-api:latest
     volumes:
       - api-data:/app/data
     environment:
@@ -28,8 +24,6 @@ services:
       - Jwt__Audience=linguaflame
       - Jwt__ExpiresHours=720
       - Cors__Origins__0=${CORS_ORIGIN:-http://localhost:3000}
-    expose:
-      - "5001"
     restart: unless-stopped
     networks:
       - app-net

@@ -1,0 +1,51 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  WEB_IMAGE: ghcr.io/emirhantasci/linguaflame-web
+  API_IMAGE: ghcr.io/emirhantasci/linguaflame-api
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Frontend ──────────────────────────────────────────
+      - name: Build & push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./linguaflame
+          file: ./linguaflame/Dockerfile
+          push: true
+          tags: ${{ env.WEB_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Backend ───────────────────────────────────────────
+      - name: Build & push api image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./linguaflame
+          file: ./linguaflame/api/Dockerfile
+          push: true
+          tags: ${{ env.API_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

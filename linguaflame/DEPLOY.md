@@ -11,6 +11,7 @@ Internet → Nginx (port 80/443)
 - **Database**: SQLite (file at `/app/data/linguaflame.db`, persisted via Docker volume)
 - **Auth**: JWT Bearer tokens (30-day expiry, no email verification needed)
 - **Users**: Email + password, bcrypt hashed
+- **Images**: Hosted on **GitHub Container Registry (GHCR)** — public, no login needed
 
 ---
 
@@ -37,34 +38,63 @@ App will be at http://localhost:3000
 - Docker + Docker Compose v2 installed
 - Domain pointed at your VPS (optional but recommended)
 
-### Steps
+### Step 1: Copy files to VPS
+
+VPS'te sadece 2 dosyaya ihtiyacın var:
 
 ```bash
-# 1. Clone the repo on your VPS
-git clone <your-repo> linguaflame
-cd linguaflame
+# VPS'te bir klasör oluştur
+mkdir -p ~/linguaflame && cd ~/linguaflame
 
-# 2. Create production .env
-cp .env.example .env
+# docker-compose.yml ve .env dosyalarını buraya koy
+# (GitHub'dan çekebilir veya manuel oluşturabilirsin)
+```
+
+### Step 2: .env dosyasını düzenle
+
+```bash
 nano .env
 ```
 
-Fill in `.env`:
 ```env
-JWT_SECRET=<output of: openssl rand -base64 48>
-CORS_ORIGIN=https://yourdomain.com
-WEB_PORT=80
+JWT_SECRET=0073sqy5qcuYwVMOiFceXdOu33iKGZ3rXMmcot8eGRk9Q3Mn1ZrTXGHBMU5Z/yez
+CORS_ORIGIN=http://VPS_IP_ADRESIN:3000
+WEB_PORT=3000
 ```
 
-```bash
-# 3. Build and start
-docker compose up -d --build
+> **Önemli**: `CORS_ORIGIN` değerini VPS'in IP adresi veya domain'in ile değiştir. Örn: `http://123.456.789.0:3000` veya `https://senindomain.com`
 
-# 4. Check logs
+### Step 3: Başlat
+
+```bash
+docker compose up -d
+```
+
+İmajlar GHCR'dan otomatik çekilecek, build gerekmez.
+
+### Step 4: Kontrol
+
+```bash
 docker compose logs -f
 ```
 
-### HTTPS with Nginx reverse proxy (recommended)
+Uygulama `http://VPS_IP:3000` adresinde çalışıyor olacak.
+
+---
+
+## Güncelleme (Update)
+
+Yeni kod push'ladığında GitHub Actions otomatik build edip GHCR'a yeni imaj push'lar. VPS'te güncellemek için:
+
+```bash
+cd ~/linguaflame
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## HTTPS with Nginx reverse proxy (recommended)
 
 If you have a domain, put Nginx/Caddy in front:
 
