@@ -6,7 +6,7 @@ WORKDIR /src
 COPY . .
 
 # Restore and publish in a single command
-RUN dotnet publish api/ -c Release -o /app
+RUN dotnet publish -c Release -o /app
 
 # ── Runtime stage ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime

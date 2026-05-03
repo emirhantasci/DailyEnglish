@@ -3,104 +3,72 @@
 ## Architecture
 
 ```
-Internet → Nginx (port 80/443)
+Internet → Traefik/Nginx (port 80/443)
               ├── /api/*  → .NET 8 API (port 5001, internal)
               └── /*      → React SPA (static files)
 ```
 
+- **Project Structure**: Separated into `api/` and `ui/` directories.
 - **Database**: SQLite (file at `/app/data/linguaflame.db`, persisted via Docker volume)
-- **Auth**: JWT Bearer tokens (30-day expiry, no email verification needed)
-- **Users**: Email + password, bcrypt hashed
-- **Deploy**: `.tar` image export → SCP → VPS load. No registry needed.
-
----
-
-## Quick Start (Local)
-
-```bash
-cp .env.example .env
-# Edit .env — set JWT_SECRET
-docker compose up --build
-```
-
-App at http://localhost:3000
+- **Auth**: JWT Bearer tokens (30-day expiry)
+- **Deploy**: Run `docker compose up --build` directly on VPS.
 
 ---
 
 ## Production Deploy on VPS
 
 ### Prerequisites
-- Docker + Docker Compose v2 on VPS
+- Docker + Docker Compose v2 installed on VPS.
+- Git to clone the repository.
 
-### Step 1: Build & export images (on your Mac)
+### Step 1: Clone the Repo
 
 ```bash
-cd linguaflame
-./build-save.sh
+# SSH into your VPS and clone the project
+git clone https://github.com/emirhantasci/DailyEnglish.git
+cd DailyEnglish/linguaflame
 ```
 
-This creates:
-- `linguaflame-web.tar`
-- `linguaflame-api.tar`
-
-### Step 2: Copy to VPS
+### Step 2: Edit .env
 
 ```bash
-# Create folder on VPS
-ssh user@VPS_IP "mkdir -p ~/linguaflame"
-
-# Copy files
-scp linguaflame-web.tar linguaflame-api.tar docker-compose.yml .env user@VPS_IP:~/linguaflame/
-```
-
-### Step 3: Edit .env on VPS
-
-```bash
-ssh user@VPS_IP
-cd ~/linguaflame
+cp .env.example .env
 nano .env
 ```
 
 ```env
 JWT_SECRET=0073sqy5qcuYwVMOiFceXdOu33iKGZ3rXMmcot8eGRk9Q3Mn1ZrTXGHBMU5Z/yez
-CORS_ORIGIN=http://VPS_IP:3000
+CORS_ORIGIN=https://linguaflame.emirhantasci.cloud
 WEB_PORT=3000
 ```
 
-> Replace `VPS_IP` with your actual VPS IP or domain.
+> **Note**: Update `CORS_ORIGIN` with your actual domain or VPS IP.
 
-### Step 4: Load & start
+### Step 3: Build & Start
 
 ```bash
-./load-images.sh
+# This will build the api and ui containers locally on the VPS and start them
+docker compose up -d --build
 ```
 
-Or manually:
+### Step 4: Check Logs
+
 ```bash
-docker load -i linguaflame-web.tar
-docker load -i linguaflame-api.tar
-docker compose up -d
+docker compose logs -f
 ```
 
-App at `http://VPS_IP:3000`
+App will be available at `http://VPS_IP:3000` (or your domain via Traefik).
 
 ---
 
 ## Update (after code changes)
 
-On your Mac:
-```bash
-./build-save.sh
-scp linguaflame-web.tar linguaflame-api.tar user@VPS_IP:~/linguaflame/
-```
+When you push new code to GitHub, simply pull it on the VPS and rebuild:
 
-On VPS:
 ```bash
-cd ~/linguaflame
-docker compose down
-docker load -i linguaflame-web.tar
-docker load -i linguaflame-api.tar
-docker compose up -d
+cd ~/DailyEnglish/linguaflame
+git pull
+docker compose up -d --build
 ```
 
 ---
