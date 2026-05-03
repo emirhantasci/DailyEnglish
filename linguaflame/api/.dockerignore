@@ -1,6 +1,27 @@
-bin/
-obj/
+# IDE/Editor specific
+.vscode/
+.idea/
+
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+
+# User-specific files
+*.user
+*.suo
+
+# Environment files
+.env
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# SQLite Database files - keep the data out of the image
 *.db
 *.db-shm
 *.db-wal
-*.tmp
+
+# Rider files
+.idea/

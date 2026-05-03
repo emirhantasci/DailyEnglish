@@ -1,7 +1,19 @@
+# Node modules
 node_modules
+
+# Build output
 dist
-.git
-.gitignore
-*.md
+build
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env*.local
+
+# IDE/Editor specific
 .vscode
-.env*
+.idea

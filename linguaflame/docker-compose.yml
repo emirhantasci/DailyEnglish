@@ -1,55 +1,55 @@
+version: '3.8'
+
 services:
-  # ── Backend (.NET 8 + SQLite) ─────────────────────────────
   api:
-    build: 
-      context: ./api
-      dockerfile: Dockerfile
-    container_name: linguaflame_api
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: linguaflame-api
+    restart: unless-stopped
+    networks:
+      - traefik-public
+      - linguaflame-internal
     volumes:
-      - api-data:/app/data
+      - sqlite_data:/app/data
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - Database__Path=/app/data/linguaflame.db
-      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Secret=${JWT_SECRET} # Make sure to set this in your VPS environment
       - Jwt__Issuer=linguaflame
       - Jwt__Audience=linguaflame
-      - Jwt__ExpiresHours=720
-      - Cors__Origins__0=${CORS_ORIGIN}
-    restart: unless-stopped
-    networks:
-      - app-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-
-  # ── Frontend (Nginx + React) ──────────────────────────────
-  web:
-    build:
-      context: ./ui
-      dockerfile: Dockerfile
-    container_name: linguaflame_web
-    depends_on:
-      api:
-        condition: service_healthy
-    ports:
-      - "${WEB_PORT:-3000}:80"
-    restart: unless-stopped
-    networks:
-      - app-net
-    # Hostinger Traefik Yapılandırması
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.linguaflame.rule=Host(`linguaflame.emirhantasci.cloud`)"
-      - "traefik.http.routers.linguaflame.entrypoints=websecure"
-      - "traefik.http.routers.linguaflame.tls.certresolver=myresolver"
+      - "traefik.http.routers.linguaflame-api.rule=Host(`linguaflame.emirhantasci.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.linguaflame-api.entrypoints=websecure"
+      - "traefik.http.routers.linguaflame-api.tls.certresolver=le" # Assuming 'le' is your Let's Encrypt resolver
+      - "traefik.http.services.linguaflame-api.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.linguaflame-api.middlewares=api-stripprefix"
 
-volumes:
-  api-data:
-    driver: local
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: linguaflame-web
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.linguaflame-web.rule=Host(`linguaflame.emirhantasci.cloud`)"
+      - "traefik.http.routers.linguaflame-web.entrypoints=websecure"
+      - "traefik.http.routers.linguaflame-web.tls.certresolver=le" # Assuming 'le' is your Let's Encrypt resolver
+      - "traefik.http.services.linguaflame-web.loadbalancer.server.port=80"
 
 networks:
-  app-net:
-    driver: bridge
+  traefik-public:
+    external: true
+  linguaflame-internal:
+    internal: true
+
+volumes:
+  sqlite_data:
+    driver: local
